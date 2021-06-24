@@ -12,7 +12,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -251,6 +251,7 @@ animate(covid_animation, nframes = 200, duration = 30)
 knitr::include_graphics("covid.gif")
 ```
   
+  It is difficult to read this graph when there are so many states. It might be better if like the example we saw, we limited it to just a few states. In general, the states seem to follow a somewhat similar trajectory, with the exception of some islands.
   
   7. In this exercise you will animate a map of the US, showing how cumulative COVID-19 cases per 10,000 residents has changed over time. This is similar to exercises 11 & 12 from the previous exercises, with the added animation! So, in the end, you should have something like the static map you made there, but animated over all the days. The code below gives the population estimates for each state and loads the `states_map` data. Here is a list of details you should include in the plot:
   
@@ -268,7 +269,31 @@ census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_ce
   mutate(state = str_to_lower(state))
 
 states_map <- map_data("state")
+
+data <- covid19 %>%
+  mutate(state = str_to_lower(state)) %>%
+  left_join(census_pop_est_2018, by = "state") %>%
+  mutate(weekday = wday(date, label = TRUE, abbr = FALSE), cases_per_10000 = (cases / est_pop_2018) * 10000) %>%
+  filter(weekday == "Friday")
 ```
+
+```{r, eval = FALSE}
+gif <- data %>%
+  ggplot() +
+  geom_map(map = states_map, 
+           aes(map_id = state, fill = cases_per_10000, group = date)) +
+  expand_limits(x = states_map$long, y = states_map$lat) + 
+  theme_map() +
+  labs(fill = "COVID19 Cases per 10,000 People", subtitle = "{closest_state}") +
+  transition_states(date)
+animate(gif, nframes = 200, end_pause = 10)
+```
+
+```{r}
+knitr::include_graphics("covidstates2.gif")
+```
+
+All the states stay pretty dark for a while, but then suddenly many get a lot lighter at once. Some of the north east coast and north west coast states don't get quite as dark as most in the end.
 
 ## Your first `shiny` app (for next week!)
 
@@ -279,6 +304,8 @@ NOT DUE THIS WEEK! If any of you want to work ahead, this will be on next week's
 ## GitHub link
 
   9. Below, provide a link to your GitHub page with this set of Weekly Exercises. Specifically, if the name of the file is 05_exercises.Rmd, provide a link to the 05_exercises.md file, which is the one that will be most readable on GitHub. If that file isn't very readable, then provide a link to your main GitHub page.
+  
+  [https://github.com/ocoing05/data-science-weekly-exercise-5](https://github.com/ocoing05/data-science-weekly-exercise-5)
 
 
 **DID YOU REMEMBER TO UNCOMMENT THE OPTIONS AT THE TOP?**
