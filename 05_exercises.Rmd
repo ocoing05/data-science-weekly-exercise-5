@@ -176,11 +176,48 @@ knitr::include_graphics("garden2.gif")
   * CHALLENGE: use the `ggimage` package and `geom_image` to add a bike image instead of a red point. You can use [this](https://raw.githubusercontent.com/llendway/animation_and_interactivity/master/bike.png) image. See [here](https://goodekat.github.io/presentations/2019-isugg-gganimate-spooky/slides.html#35) for an example. 
   * Add something of your own! And comment on if you prefer this to the static map and why or why not.
   
+```{r}
+map1 <- get_stamenmap(
+  bbox = c(left = 2.3199, bottom = 39.5381, right = 2.6941, top = 39.7039),
+  maptype = "terrain",
+  zoom = 12
+)
+ggmap(map1) +
+  geom_point(data = mallorca_bike_day7, aes(x = lon, y = lat, color = ele), size = 0.15) + 
+  transition_time(time) + 
+  shadow_mark(past = TRUE, future = FALSE) +
+  enter_recolor(color = "red") + 
+  labs(subtitle = "{frame_time}", x = "Longitude", y = "Latitude", color = "Elevation")
+# can't figure out why the enter_recolor isn't working :(
+```
+
+```{r}
+knitr::include_graphics("bike1.gif")
+```
+  
+  I do prefer this to the static map, because I think it is more interesting to look at and makes you absorb the map more since you are looking at it longer.
+  
   5. In this exercise, you get to meet my sister, Heather! She is a proud Mac grad, currently works as a Data Scientist at 3M where she uses R everyday, and for a few years (while still holding a full-time job) she was a pro triathlete. You are going to map one of her races. The data from each discipline of the Ironman 70.3 Pan Am championships, Panama is in a separate file - `panama_swim`, `panama_bike`, and `panama_run`. Create a similar map to the one you created with my cycling data. You will need to make some small changes: 1. combine the files (HINT: `bind_rows()`, 2. make the leading dot a different color depending on the event (for an extra challenge, make it a different image using `geom_image()!), 3. CHALLENGE (optional): color by speed, which you will need to compute on your own from the data. You can read Heather's race report [here](https://heatherlendway.com/2016/02/10/ironman-70-3-pan-american-championships-panama-race-report/). She is also in the Macalester Athletics [Hall of Fame](https://athletics.macalester.edu/honors/hall-of-fame/heather-lendway/184) and still has records at the pool. 
   
-```{r}
+```{r, eval = FALSE}
+panama_all <- bind_rows(panama_swim, panama_bike, panama_run)
 
+map2 <- get_stamenmap(
+  bbox = c(left = -79.6032, bottom = 8.8934, right = -79.4160, top = 8.9997),
+  maptype = "terrain",
+  zoom = 13
+)
+ggmap(map2) +
+  geom_point(data = panama_all, aes(x = lon, y = lat, color = event), size = 0.075) +
+  transition_time(hrminsec) +
+  shadow_mark(past = TRUE, future = FALSE, color = "black", alpha = 0.1, size = 0.05) + 
+  labs(title = "Heather's Triathlon", x = "", y = "")
 ```
+  
+```{r}
+knitr::include_graphics("panama.gif")
+```
+  
   
 ## COVID-19 data
 
@@ -191,6 +228,29 @@ knitr::include_graphics("garden2.gif")
   * Animate the plot to reveal the pattern by date. Display the date as the subtitle. Add a leading point to each state's line (`geom_point()`) and add the state name as a label (`geom_text()` - you should look at the `check_overlap` argument).  
   * Use the `animate()` function to have 200 frames in your animation and make it 30 seconds long. 
   * Comment on what you observe.
+  
+```{r, eval = FALSE}
+covid_animation <- covid19 %>%
+  group_by(state) %>%
+  mutate(new_cases = cases - lag(cases, 7)) %>%
+  replace_na(list(new_cases = 0)) %>%
+  filter(cases >= 20) %>%
+  ggplot(aes(x = cases, y = new_cases, group = state)) +
+  geom_path() + 
+  geom_point() +
+  geom_text(aes(label = state), check_overlap = TRUE) +
+  scale_x_log10(labels = scales::comma) +
+  scale_y_log10(labels = scales::comma) + 
+  labs(subtitle = "{frame_along}", y = "New Weekly Cases", x = "Cumulative Cases", title = "COVID19 Cases") +
+  transition_reveal(date)
+animate(covid_animation, nframes = 200, duration = 30)
+```
+  
+```{r}
+
+knitr::include_graphics("covid.gif")
+```
+  
   
   7. In this exercise you will animate a map of the US, showing how cumulative COVID-19 cases per 10,000 residents has changed over time. This is similar to exercises 11 & 12 from the previous exercises, with the added animation! So, in the end, you should have something like the static map you made there, but animated over all the days. The code below gives the population estimates for each state and loads the `states_map` data. Here is a list of details you should include in the plot:
   
